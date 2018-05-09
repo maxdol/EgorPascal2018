@@ -8,7 +8,7 @@ const
   stateSize : integer = 10;
   
 var 
-  boyPosition : integer = stateSize div 2;
+  boyPosition : integer = stateSize div 2; { 1..10 }
   running : boolean = true;
   boySpeed : integer = 1;
   state : array [1..stateSize,1..stateSize] of integer; { main game state}
@@ -105,10 +105,10 @@ begin
   while running do
   begin
     var left : integer = 100;
-    var columnWidth : integer := 50;
+    var columnWidth : integer := 80;
     LockDrawing;
     window.Clear;
-    DrawCircle(left + boyPosition * columnWidth, 650, columnWidth - 10);
+    DrawCircle(left + (boyPosition - 1) * columnWidth + (columnWidth div 2), 650, (columnWidth div 2) - 10);
     for var i := 0 to stateSize do
     begin
       MoveTo(left + i * columnWidth, 0);
