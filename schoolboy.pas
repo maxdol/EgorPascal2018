@@ -90,6 +90,11 @@ begin
       state[i,j] := 0;
 end;
 
+function ColumnCenterX(column : integer; columnWidth : integer; left : integer) : integer;
+begin
+  Result := left + (column - 1) * columnWidth + (columnWidth div 2);
+end;
+
 { ------------------------- main -------------------------------------------------- }
 begin
   var window := new GraphABCWindow();
@@ -108,11 +113,23 @@ begin
     var columnWidth : integer := 80;
     LockDrawing;
     window.Clear;
-    DrawCircle(left + (boyPosition - 1) * columnWidth + (columnWidth div 2), 650, (columnWidth div 2) - 10);
-    for var i := 0 to stateSize do
+    DrawCircle(ColumnCenterX(boyPosition, columnWidth, left), 650, (columnWidth div 2) - 10);
+    for var i := 0 to stateSize do { draw mesh }
     begin
       MoveTo(left + i * columnWidth, 0);
       LineTo(left + i * columnWidth, 700);
+    end;
+
+    for var i := 1 to stateSize do { draw state }
+    begin
+      for var j := 1 to stateSize do
+      begin
+        if (state[i, j] <> 0) then
+        begin
+          TextOut(ColumnCenterX(i, columnWidth, left), 
+                  j * 20, state[i, j]);
+        end;
+      end
     end;
     
     
