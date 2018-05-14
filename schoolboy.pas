@@ -4,17 +4,18 @@ uses GraphABC;
 uses Timers;
 
 const 
-  windowWidth : integer = 1000;
-  stateSize : integer = 10;
+  windowWidth : integer = 1000; { in pixels }
+  stateSizeH : integer = 10; {state size horizontal, number of columns}
+  stateSizeV : integer = 30; {state size vertical  , number of rows}
   
 var 
-  boyPosition : integer = stateSize div 2; { 1..10 }
-  running : boolean = true;
-  boySpeed : integer = 1;
-  state : array [1..stateSize,1..stateSize] of integer; { main game state}
-  score : integer = 0;     { positive score}
-  deadCount : integer = 0; { number of looses}
-  generatorSpeed : integer = 80; { 1 .. 100 speed of figures generation }
+  boyPosition : integer = stateSizeH div 2;               { 1..stateSizeH }
+  running : boolean = true;                               { false mean that we need to exit }
+  boySpeed : integer = 1;                                 { horizontal speed of the boy, can be increased by pressing Ctrl }
+  state : array [1..stateSizeH,1..stateSizeV] of integer; { main game state }
+  score : integer = 0;                                    { positive score }
+  deadCount : integer = 0;                                { number of looses }
+  generatorSpeed : integer = 80;                          { 1 .. 100 speed of figures generation }
 
 procedure UpdateScore(bottomFigure : integer; hasPlayer : boolean);
 begin
@@ -30,12 +31,12 @@ end;
 
 procedure UpdateState();
 begin
-  for var i := 1 to stateSize do { iterate columns }
+  for var i := 1 to stateSizeH do { iterate columns }
   begin
-    UpdateScore(state[i,stateSize], boyPosition = i); { check bottom line: do we catch }
+    UpdateScore(state[i,stateSizeV], boyPosition = i); { check bottom line: do we catch }
 
     { shift all figures 1 line down }
-    for var j := stateSize downto 2 do
+    for var j := stateSizeV downto 2 do
     begin
       state[i,j] := state[i,j-1];
     end;
@@ -51,7 +52,7 @@ begin
     else
       figure := 2;
       
-    state[Random(1, stateSize), 1] := figure;
+    state[Random(1, stateSizeH), 1] := figure;
   end;
 end;
 
@@ -62,12 +63,12 @@ begin
       begin
         boyPosition := boyPosition - 1 * boySpeed;
         if boyPosition < 1 then
-          boyPosition := stateSize;
+          boyPosition := stateSizeH;
       end;
     VK_Right: 
       begin
         boyPosition := boyPosition + 1 * boySpeed;
-        if boyPosition > stateSize then
+        if boyPosition > stateSizeH then
           boyPosition := 1;
       end;
     VK_ControlKey : boySpeed := 3;
@@ -85,8 +86,8 @@ end;
 
 procedure InitState();
 begin
-  for var i := 1 to stateSize do
-    for var j := 1 to stateSize do
+  for var i := 1 to stateSizeH do
+    for var j := 1 to stateSizeV do
       state[i,j] := 0;
 end;
 
@@ -114,15 +115,15 @@ begin
     LockDrawing;
     window.Clear;
     DrawCircle(ColumnCenterX(boyPosition, columnWidth, left), 650, (columnWidth div 2) - 10);
-    for var i := 0 to stateSize do { draw mesh }
+    for var i := 0 to stateSizeH do { draw mesh }
     begin
       MoveTo(left + i * columnWidth, 0);
       LineTo(left + i * columnWidth, 700);
     end;
 
-    for var i := 1 to stateSize do { draw state }
+    for var i := 1 to stateSizeH do { draw state }
     begin
-      for var j := 1 to stateSize do
+      for var j := 1 to stateSizeV do
       begin
         if (state[i, j] <> 0) then
         begin
