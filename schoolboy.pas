@@ -165,6 +165,40 @@ begin
   end;    
 end;
 
+procedure Game( window : GraphABCWindow );
+begin
+  while running do
+  begin
+    var left : integer = 100;
+    var columnWidth : integer := 80;
+    LockDrawing;
+    window.Clear;
+    DrawCircle(ColumnCenterX(boyPosition, columnWidth, left), 650, (columnWidth div 2) - 10);
+    for var i := 0 to stateSizeH do { draw mesh }
+    begin
+      MoveTo(left + i * columnWidth, 0);
+      LineTo(left + i * columnWidth, 700);
+    end;
+
+    for var i := 1 to stateSizeH do { draw state }
+    begin
+      for var j := 1 to stateSizeV do
+      begin
+        if (state[i, j] <> 0) then
+        begin
+          TextOut(ColumnCenterX(i, columnWidth, left), 
+                  j * 20, state[i, j]);
+        end;
+      end
+    end;
+    DrawScore();
+
+
+    Redraw;
+    Sleep(10);
+  end;
+end;
+
 { ------------------------- main -------------------------------------------------- }
 begin
   var window := new GraphABCWindow();
@@ -178,37 +212,7 @@ begin
   repeat
   begin
     InitState();
-
-    while running do
-    begin
-      var left : integer = 100;
-      var columnWidth : integer := 80;
-      LockDrawing;
-      window.Clear;
-      DrawCircle(ColumnCenterX(boyPosition, columnWidth, left), 650, (columnWidth div 2) - 10);
-      for var i := 0 to stateSizeH do { draw mesh }
-      begin
-        MoveTo(left + i * columnWidth, 0);
-        LineTo(left + i * columnWidth, 700);
-      end;
-
-      for var i := 1 to stateSizeH do { draw state }
-      begin
-        for var j := 1 to stateSizeV do
-        begin
-          if (state[i, j] <> 0) then
-          begin
-            TextOut(ColumnCenterX(i, columnWidth, left), 
-                    j * 20, state[i, j]);
-          end;
-        end
-      end;
-      DrawScore();
-
-
-      Redraw;
-      Sleep(10);
-    end;
+    Game(window);
     DrawFinalResult(window);
   end;
   until GiveUp();
