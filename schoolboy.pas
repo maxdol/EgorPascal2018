@@ -11,8 +11,9 @@ const
   VK_ESC : integer = 27;
   ExitFlag : integer = 0;
   ContinueFlag : integer = 1;
-  InitialGeneratorSpeed : integer = 10;
+  InitialGeneratorSpeed : integer = 20;
   InitailGameSpeed : integer = 1;
+  GameOverLimit : integer = 5;
 
 var 
   boyPosition : integer = stateSizeH div 2;               { 1..stateSizeH }
@@ -23,7 +24,7 @@ var
   score : integer = 0;                                    { positive score }
   deadCount : integer = 0;                                { number of looses }
   generatorSpeed : integer = InitialGeneratorSpeed;       { 1 .. 100 speed of figures generation }
-  gameSpeed : integer = InitailGameSpeed;                 { 1 .. 100 speed of faling figures }
+  gameSpeed : integer = InitailGameSpeed;                 { 1 .. 10 speed of faling figures }
 
 procedure UpdateScore(bottomFigure : integer; hasPlayer : boolean);
 begin
@@ -38,12 +39,12 @@ begin
         end;  
   end;
 
-  if (deadCount = 3) then
+  if (deadCount = GameOverLimit) then
     running := false;
 
 end;
 
-procedure UpdateState();
+procedure UpdateState(step : integer);
 begin
   for var i := 1 to stateSizeH do { iterate columns }
   begin
@@ -58,10 +59,10 @@ begin
   end;    
 
   {generate new figures}
-  if Random(1, 100) < generatorSpeed then { need to add new failing figure }
+  if ((step mod 4) = 0) and (Random(1, 100) < generatorSpeed) then { need to add new failing figure }
   begin
     var figure : integer;
-    if Random(1, 10) > 7 then
+    if Random(1, 10) > 3 then
       figure := 5
     else
       figure := 2;
@@ -87,7 +88,7 @@ begin
       end;
     VK_ControlKey : boySpeed := 3;
     VK_ESC        : running := false;
-    VK_F5         : UpdateState();        { manual update state : for debug}
+    {VK_F5         : UpdateState();        { manual update state : for debug}
    end;
 end;
 
@@ -124,10 +125,33 @@ begin
   Result := left + (column - 1) * columnWidth + (columnWidth div 2);
 end;
 
-procedure DrawScore();
+function GameSleepTime() : integer; { return milliseconds to sleep between steps }
+begin
+  Result := (15 - gameSpeed);
+end;
+
+function MinMax(x, min, max : integer) : integer;
+begin
+  Result := System.Math.Min(max, System.Math.Max(min, x));
+end;
+
+procedure UpdateSpeed(step : integer);
+begin
+  gameSpeed      := MinMax(step div 250, InitailGameSpeed, 10);
+  generatorSpeed := MinMax(step div 80, 0, 95 - InitialGeneratorSpeed) + InitialGeneratorSpeed;
+end;
+
+procedure DrawScore(step : integer);
 begin
   TextOut( 10, 10, String.Format('Счет: {0}', score ));
-  TextOut( 10, 30, String.Format('Потери: {0}', deadCount));
+  TextOut( 10, 30, String.Format('Потери: {0} ({1})', deadCount, GameOverLimit));
+
+  TextOut( 10, 60, String.Format('Скорость: {0}%', gameSpeed * 10));
+  TextOut( 10, 80, String.Format('Нагрузка: {0}%', generatorSpeed));
+  { debug info : }
+  TextOut( 10, 100, String.Format('шаг: {0}', step));
+  TextOut( 10, 120, String.Format('сон: {0}', GameSleepTime));
+  
 end;
 
 procedure DrawFinalResult(window : GraphABCWindow);
@@ -165,11 +189,15 @@ begin
   end;    
 end;
 
+
 procedure Game( window : GraphABCWindow );
 begin
+  var step : integer = 0;
+  var drawStep : integer = 0;
+  
   while running do
   begin
-    var left : integer = 100;
+    var left : integer = 200;
     var columnWidth : integer := 80;
     LockDrawing;
     window.Clear;
@@ -191,11 +219,18 @@ begin
         end;
       end
     end;
-    DrawScore();
+    DrawScore(step);
 
-
+    drawStep += 1;
+    if (drawStep = 10) then
+    begin
+      step += 1;
+      drawStep := 0;
+      UpdateState(step);
+      UpdateSpeed(step);
+    end;
     Redraw;
-    Sleep(10);
+    Sleep(GameSleepTime());
   end;
 end;
 
@@ -203,7 +238,7 @@ end;
 begin
   var window := new GraphABCWindow();
   window.SetSize(windowWidth, 700);
-  window.Caption := 'Pupil game';
+  window.Caption := 'Ученик: ловите 5-ки, уворачивайтесь от 2-ек';
   window.IsFixedSize := true;
   window.CenterOnScreen;
   OnKeyDown := KeyDown;
