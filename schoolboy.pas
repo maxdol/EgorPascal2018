@@ -22,10 +22,12 @@ begin
   case bottomFigure of
     2 : if hasPlayer then 
           deadCount += 1;
-    5 : if hasPlayer then
-          score += 1;
-        else
-          deadCount += 1;
+    5 : begin
+          if hasPlayer then
+            score += 1
+          else
+            deadCount += 1;
+        end;  
   end;        
 end;
 
@@ -96,6 +98,15 @@ begin
   Result := left + (column - 1) * columnWidth + (columnWidth div 2);
 end;
 
+procedure DrawScore();
+begin
+  TextOut( 10, 10, 'Score:' );
+  TextOut( 80, 10, score );
+  TextOut( 10, 30, 'Dead count:' );
+  TextOut( 80, 30, deadCount );
+  
+end;
+
 { ------------------------- main -------------------------------------------------- }
 begin
   var window := new GraphABCWindow();
@@ -132,6 +143,7 @@ begin
         end;
       end
     end;
+    DrawScore();
     
     
     Redraw;
