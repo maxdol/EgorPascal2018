@@ -154,23 +154,35 @@ begin
   
 end;
 
+procedure DrawTextOnCenter(y : integer; window : GraphABCWindow; s : string);
+begin
+  var width : integer;
+  width := GraphABC.TextWidth(s);
+  TextOut( (window.Width - width ) div 2, y, s );
+end;
+
 procedure DrawFinalResult(window : GraphABCWindow);
 begin
   LockDrawing;
   window.Clear();
-  TextOut( (window.Width div 2) - 20, (window.Height div 2) - 10, 'Игра закончена!' );
-  TextOut( (window.Width div 2) - 20, (window.Height div 2) + 10, String.Format('Итоговый счет: {0}', score ));
-  TextOut( (window.Width div 2) - 20, (window.Height div 2) + 40, 'Нажмите "Esc" для выхода, "Enter", чтобы сыграть еще раз.');
+  SetFontSize(40);
+  DrawTextOnCenter( (window.Height div 2) - 120, window, 'Игра закончена!' );
+  DrawTextOnCenter( (window.Height div 2) - 40 , window, String.Format('Итоговый счет: {0}', score ));
+
+  SetFontSize(30);
+  DrawTextOnCenter( (window.Height div 2) + 80 , window, 'Нажмите "Esc" для выхода.');
+  DrawTextOnCenter( (window.Height div 2) + 140, window, 'Нажмите "Enter", чтобы сыграть еще раз.');
   Redraw;
 end;
 
-function GiveUp() : boolean;
+function GiveUp(window : GraphABCWindow) : boolean;
 begin
   gameOverAction := -1;
   OnKeyDown := FinalKeyDown;
 
   while true do
   begin
+    DrawFinalResult(window);
     if (gameOverAction = ExitFlag) then
     begin
       Result := true;
@@ -201,25 +213,36 @@ begin
     var columnWidth : integer := 80;
     LockDrawing;
     window.Clear;
-    DrawCircle(ColumnCenterX(boyPosition, columnWidth, left), 650, (columnWidth div 2) - 10);
     for var i := 0 to stateSizeH do { draw mesh }
     begin
       MoveTo(left + i * columnWidth, 0);
       LineTo(left + i * columnWidth, 700);
     end;
 
+    SetFontSize(30);
+    var tWidth : integer = TextWidth('5') div 2;
     for var i := 1 to stateSizeH do { draw state }
     begin
       for var j := 1 to stateSizeV do
       begin
-        if (state[i, j] <> 0) then
+        var d : integer = state[i, j];
+        if (d <> 0) then
         begin
-          TextOut(ColumnCenterX(i, columnWidth, left), 
+          if ( d = 5 ) then
+            SetFontColor(clDarkGreen);
+
+          if ( d = 2 ) then
+            SetFontColor(clRed);
+
+          TextOut(ColumnCenterX(i, columnWidth, left) - tWidth, 
                   j * 20, state[i, j]);
         end;
       end
     end;
+    SetFontColor(clBlack);
+    SetFontSize(10);
     DrawScore(step);
+    DrawCircle(ColumnCenterX(boyPosition, columnWidth, left), 650, (columnWidth div 2) - 10);
 
     drawStep += 1;
     if (drawStep = 10) then
@@ -248,9 +271,8 @@ begin
   begin
     InitState();
     Game(window);
-    DrawFinalResult(window);
   end;
-  until GiveUp();
+  until GiveUp(window);
 
   window.Close;
 end.
