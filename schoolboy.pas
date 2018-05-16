@@ -3,19 +3,27 @@
 uses GraphABC;
 uses Timers;
 
+
 const 
   windowWidth : integer = 1000; { in pixels }
   stateSizeH : integer = 10; {state size horizontal, number of columns}
   stateSizeV : integer = 30; {state size vertical  , number of rows}
-  
+  VK_ESC : integer = 27;
+  ExitFlag : integer = 0;
+  ContinueFlag : integer = 1;
+  InitialGeneratorSpeed : integer = 10;
+  InitailGameSpeed : integer = 1;
+
 var 
   boyPosition : integer = stateSizeH div 2;               { 1..stateSizeH }
   running : boolean = true;                               { false mean that we need to exit }
+  gameOverAction : integer = -1;                          { -1 - no action, ExitFlag - exit, ContinueFlag - play again }
   boySpeed : integer = 1;                                 { horizontal speed of the boy, can be increased by pressing Ctrl }
   state : array [1..stateSizeH,1..stateSizeV] of integer; { main game state }
   score : integer = 0;                                    { positive score }
   deadCount : integer = 0;                                { number of looses }
-  generatorSpeed : integer = 80;                          { 1 .. 100 speed of figures generation }
+  generatorSpeed : integer = InitialGeneratorSpeed;       { 1 .. 100 speed of figures generation }
+  gameSpeed : integer = InitailGameSpeed;                 { 1 .. 100 speed of faling figures }
 
 procedure UpdateScore(bottomFigure : integer; hasPlayer : boolean);
 begin
@@ -28,7 +36,11 @@ begin
           else
             deadCount += 1;
         end;  
-  end;        
+  end;
+
+  if (deadCount = 3) then
+    running := false;
+
 end;
 
 procedure UpdateState();
@@ -74,8 +86,16 @@ begin
           boyPosition := 1;
       end;
     VK_ControlKey : boySpeed := 3;
-    VK_Space : running := false;
-    VK_Enter : UpdateState(); { manual update state : for debug}
+    VK_ESC        : running := false;
+    VK_F5         : UpdateState();        { manual update state : for debug}
+   end;
+end;
+
+procedure FinalKeyDown(Key: integer);
+begin
+   case Key of
+    VK_ESC   : gameOverAction := ExitFlag;
+    VK_Enter : gameOverAction := ContinueFlag;
    end;
 end;
 
@@ -88,6 +108,12 @@ end;
 
 procedure InitState();
 begin
+  score := 0;
+  deadCount := 0;
+  boyPosition := stateSizeH div 2;
+  generatorSpeed := InitialGeneratorSpeed;
+  gameSpeed := InitailGameSpeed;
+
   for var i := 1 to stateSizeH do
     for var j := 1 to stateSizeV do
       state[i,j] := 0;
@@ -100,11 +126,43 @@ end;
 
 procedure DrawScore();
 begin
-  TextOut( 10, 10, 'Score:' );
-  TextOut( 80, 10, score );
-  TextOut( 10, 30, 'Dead count:' );
-  TextOut( 80, 30, deadCount );
-  
+  TextOut( 10, 10, String.Format('Счет: {0}', score ));
+  TextOut( 10, 30, String.Format('Потери: {0}', deadCount));
+end;
+
+procedure DrawFinalResult(window : GraphABCWindow);
+begin
+  LockDrawing;
+  window.Clear();
+  TextOut( (window.Width div 2) - 20, (window.Height div 2) - 10, 'Игра закончена!' );
+  TextOut( (window.Width div 2) - 20, (window.Height div 2) + 10, String.Format('Итоговый счет: {0}', score ));
+  TextOut( (window.Width div 2) - 20, (window.Height div 2) + 40, 'Нажмите "Esc" для выхода, "Enter", чтобы сыграть еще раз.');
+  Redraw;
+end;
+
+function GiveUp() : boolean;
+begin
+  gameOverAction := -1;
+  OnKeyDown := FinalKeyDown;
+
+  while true do
+  begin
+    if (gameOverAction = ExitFlag) then
+    begin
+      Result := true;
+      exit;
+    end;
+
+    if (gameOverAction = ContinueFlag) then
+    begin
+      running := true;
+      OnKeyDown := KeyDown;
+      Result := false;
+      exit;
+    end;
+
+    Sleep(10);  
+  end;    
 end;
 
 { ------------------------- main -------------------------------------------------- }
@@ -116,39 +174,44 @@ begin
   window.CenterOnScreen;
   OnKeyDown := KeyDown;
   OnKeyUp := KeyUp;
-  
-  InitState();
 
-  while running do
+  repeat
   begin
-    var left : integer = 100;
-    var columnWidth : integer := 80;
-    LockDrawing;
-    window.Clear;
-    DrawCircle(ColumnCenterX(boyPosition, columnWidth, left), 650, (columnWidth div 2) - 10);
-    for var i := 0 to stateSizeH do { draw mesh }
-    begin
-      MoveTo(left + i * columnWidth, 0);
-      LineTo(left + i * columnWidth, 700);
-    end;
+    InitState();
 
-    for var i := 1 to stateSizeH do { draw state }
+    while running do
     begin
-      for var j := 1 to stateSizeV do
+      var left : integer = 100;
+      var columnWidth : integer := 80;
+      LockDrawing;
+      window.Clear;
+      DrawCircle(ColumnCenterX(boyPosition, columnWidth, left), 650, (columnWidth div 2) - 10);
+      for var i := 0 to stateSizeH do { draw mesh }
       begin
-        if (state[i, j] <> 0) then
+        MoveTo(left + i * columnWidth, 0);
+        LineTo(left + i * columnWidth, 700);
+      end;
+
+      for var i := 1 to stateSizeH do { draw state }
+      begin
+        for var j := 1 to stateSizeV do
         begin
-          TextOut(ColumnCenterX(i, columnWidth, left), 
-                  j * 20, state[i, j]);
-        end;
-      end
+          if (state[i, j] <> 0) then
+          begin
+            TextOut(ColumnCenterX(i, columnWidth, left), 
+                    j * 20, state[i, j]);
+          end;
+        end
+      end;
+      DrawScore();
+
+
+      Redraw;
+      Sleep(10);
     end;
-    DrawScore();
-    
-    
-    Redraw;
-    Sleep(10);
+    DrawFinalResult(window);
   end;
-  
+  until GiveUp();
+
   window.Close;
 end.
