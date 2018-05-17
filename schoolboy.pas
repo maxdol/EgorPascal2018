@@ -233,12 +233,13 @@ begin
             SetFontColor(clRed);
 
           TextOut(ColumnCenterX(i, columnWidth, left) - tWidth, 
-                  j * 20, state[i, j]);
+                  j * 20, d);
         end;
       end
     end;
     SetFontColor(clBlack);
     DrawScore(step);
+    
     var boy := Picture.Create('boy.png');
     boy.Draw(ColumnCenterX(boyPosition, columnWidth, left) - 17, 650);
 
