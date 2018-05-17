@@ -88,7 +88,6 @@ begin
       end;
     VK_ControlKey : boySpeed := 3;
     VK_ESC        : running := false;
-    {VK_F5         : UpdateState();        { manual update state : for debug}
    end;
 end;
 
@@ -143,15 +142,14 @@ end;
 
 procedure DrawScore(step : integer);
 begin
+  SetFontSize(14);
   TextOut( 10, 10, String.Format('Счет: {0}', score ));
-  TextOut( 10, 30, String.Format('Потери: {0} ({1})', deadCount, GameOverLimit));
+  TextOut( 10, 40, String.Format('Потери: {0} ({1})', deadCount, GameOverLimit));
 
-  TextOut( 10, 60, String.Format('Скорость: {0}%', gameSpeed * 10));
-  TextOut( 10, 80, String.Format('Нагрузка: {0}%', generatorSpeed));
-  { debug info : }
-  TextOut( 10, 100, String.Format('шаг: {0}', step));
-  TextOut( 10, 120, String.Format('сон: {0}', GameSleepTime));
-  
+  TextOut( 10, 100, String.Format('Скорость: {0}%', gameSpeed * 10));
+  TextOut( 10, 130, String.Format('Нагрузка: {0}%', generatorSpeed));
+
+  SetFontSize(10);
 end;
 
 procedure DrawTextOnCenter(y : integer; window : GraphABCWindow; s : string);
@@ -240,9 +238,9 @@ begin
       end
     end;
     SetFontColor(clBlack);
-    SetFontSize(10);
     DrawScore(step);
-    DrawCircle(ColumnCenterX(boyPosition, columnWidth, left), 650, (columnWidth div 2) - 10);
+    var boy := Picture.Create('boy.png');
+    boy.Draw(ColumnCenterX(boyPosition, columnWidth, left) - 17, 650);
 
     drawStep += 1;
     if (drawStep = 10) then
